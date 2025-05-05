@@ -39,6 +39,7 @@ export default function Home() {
   };
 
   return (
+
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <h1 className="text-4xl font-bold text-center sm:text-left transition-all duration-700 ease-in-out text-gray-900 dark:text-gray-100">
@@ -81,6 +82,39 @@ export default function Home() {
               >
                 Previous Question
               </button>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={currentQuestionIndex || ''}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    if (newValue === '' || /^[0-9]*$/.test(newValue)) {
+                      const parsedValue = newValue === '' ? 0 : parseInt(newValue, 10);
+                      if (
+                        parsedValue >= 1 &&
+                        parsedValue <= Object.keys(parsedQuestions).length
+                      ) {
+                        setCurrentQuestionIndex(parsedValue);
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const newIndex = currentQuestionIndex;
+                      if (
+                        newIndex >= 1 &&
+                        newIndex <= Object.keys(parsedQuestions).length
+                      ) {
+                        setCurrentQuestionIndex(newIndex);
+                      }
+                    }
+                  }}
+                  className="w-16 px-2 py-1 text-center border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+                />
+                <span className="text-gray-700 dark:text-gray-300">
+                  / {Object.keys(parsedQuestions).length}
+                </span>
+              </div>
               <button
                 onClick={handleNext}
                 disabled={
