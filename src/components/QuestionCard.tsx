@@ -32,7 +32,7 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
     };
 
     return (
-        <div className="border rounded-xl p-4 my-4 shadow-sm w-full max-w-xl bg-white dark:bg-gray-800">
+        <div className="border rounded-xl p-4 my-4 shadow-sm w-full max-w-5xl bg-white dark:bg-gray-800">
             <h2 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Question {questionNumber}</h2>
             <p className="mb-3 text-gray-700 dark:text-gray-300">{data.question}</p>
             <div className="space-y-1 mb-4">
