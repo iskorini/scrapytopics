@@ -95,8 +95,16 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a> example footer </a>
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500">
+        <p>© {new Date().getFullYear()} Scrapy Topics. All rights reserved.</p>
+        <a
+          href="https://github.com/iskorini"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline text-blue-500"
+        >
+          GitHub
+        </a>
       </footer>
     </div>
   );
