@@ -39,7 +39,7 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
                 {Object.entries(data.answers).map(([key, value]) => (
                     <div key={key} className={getAnswerStyle(key)}>
                         <span className="font-medium text-gray-900 dark:text-gray-100">{key})</span>
-                        <span className="text-gray-700 dark:text-gray-300">{value}</span>
+                        <span className="text-gray-700 dark:text-gray-300"> {value}</span>
                     </div>
                 ))}
             </div>
