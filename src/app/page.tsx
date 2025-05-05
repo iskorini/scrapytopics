@@ -39,9 +39,9 @@ export default function Home() {
   };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <h1 className="text-4xl font-bold text-center sm:text-left transition-all duration-700 ease-in-out">
+        <h1 className="text-4xl font-bold text-center sm:text-left transition-all duration-700 ease-in-out text-gray-900 dark:text-gray-100">
           {isProcessed ? 'Have fun' : 'Upload your PDF'}
         </h1>
 
@@ -77,7 +77,7 @@ export default function Home() {
               <button
                 onClick={handlePrev}
                 disabled={currentQuestionIndex === 1}
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
               >
                 Previous Question
               </button>
@@ -86,7 +86,7 @@ export default function Home() {
                 disabled={
                   currentQuestionIndex === Object.keys(parsedQuestions).length
                 }
-                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
+                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 dark:bg-blue-400 dark:hover:bg-blue-500"
               >
                 Next Question
               </button>
@@ -95,13 +95,13 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500">
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500 dark:text-gray-400">
         <p>© {new Date().getFullYear()} Scrapy Topics. All rights reserved.</p>
         <a
           href="https://github.com/iskorini"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:underline text-blue-500"
+          className="hover:underline text-blue-500 dark:text-blue-400"
         >
           GitHub
         </a>

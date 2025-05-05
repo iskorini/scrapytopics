@@ -56,26 +56,26 @@ export const UploadPDF = ({
     };
 
     return (
-        <div className="border rounded-2xl p-6 w-full max-w-md shadow-md bg-white flex flex-col items-center gap-6">
+        <div className="border rounded-2xl p-6 w-full max-w-md shadow-md bg-white dark:bg-gray-800 flex flex-col items-center gap-6">
             <div className="w-full">
-                <p className="font-semibold mb-2">Settings</p>
+                <p className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Settings</p>
                 <label className="inline-flex items-center space-x-2">
                     <input
                         type="checkbox"
                         checked={randomize}
                         onChange={(e) => setRandomize(e.target.checked)}
-                        className="form-checkbox h-5 w-5 text-blue-600"
+                        className="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400"
                     />
-                    <span>Randomize questions (not yet implemented)</span>
+                    <span className="text-gray-700 dark:text-gray-300">Randomize questions (not yet implemented)</span>
                 </label>
             </div>
-            <label className="px-4 py-2 border border-blue-400 text-blue-700 rounded cursor-pointer hover:bg-blue-50 flex items-center justify-center">
+            <label className="px-4 py-2 border border-blue-400 text-blue-700 dark:border-blue-600 dark:text-blue-400 rounded cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center justify-center">
                 {isLoading ? (
-                    <div className="animate-spin h-5 w-5 border-4 border-blue-400 border-t-transparent rounded-full"></div>
+                    <div className="animate-spin h-5 w-5 border-4 border-blue-400 dark:border-blue-600 border-t-transparent rounded-full"></div>
                 ) : isProcessed ? (
-                    <span className="text-green-500 font-semibold">PDF Processed ✔</span>
+                    <span className="text-green-500 dark:text-green-400 font-semibold">PDF Processed ✔</span>
                 ) : (
-                    "Upload a PDF file"
+                    <span className="text-gray-700 dark:text-gray-300">Upload a PDF file</span>
                 )}
                 <input type="file" accept="application/pdf" className="hidden" onChange={handleChange} />
             </label>
