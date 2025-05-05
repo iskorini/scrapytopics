@@ -3,28 +3,6 @@
 import React, { useState } from "react";
 import { parsePdfTextToQuestions, ParsedQuestions } from "@/lib/parser";
 
-const setError = (message: string | null) => {
-    console.error(message);
-};
-
-async function fetchPdfText(encodedPdf: string): Promise<string> {
-    const apiUrl = process.env.NEXT_PUBLIC_AWS_LAMBDA_PDF2TEXT;
-    console.log("API URL:", apiUrl);
-    const response = await fetch(`${apiUrl}/default/extract`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ file_content: encodedPdf, filename: "file.pdf" }),
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch PDF text: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.text;
-}
 
 export const UploadPDF = ({
     setParsedQuestions,
@@ -51,8 +29,18 @@ export const UploadPDF = ({
             setIsProcessed(false); // Reset processed state
             const reader = new FileReader();
             reader.onload = async () => {
-                const base64 = (reader.result as string).split(",")[1]; // Extract Base64 content
-                const text = await fetchPdfText(base64);
+                const encodedPdf = (reader.result as string).split(",")[1]; // Extract Base64 content
+                const response = await fetch('/api/pdf2text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file_content: encodedPdf, filename: 'file.pdf' }),
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch PDF text: ${response.statusText}`);
+                }
+                const data = await response.json();
+                const text = data.text;
+                //const text = await fetchPdfText(base64);
                 const parsedQuestions = parsePdfTextToQuestions(text);
                 setParsedQuestions(parsedQuestions);
                 console.log("Parsed Questions:", parsedQuestions);
@@ -60,7 +48,7 @@ export const UploadPDF = ({
             };
             reader.readAsDataURL(file); // Read file as Data URL
         } catch (err) {
-            setError("Failed to process the PDF file.");
+            //setError("Failed to process the PDF file.");
             console.error(err);
         } finally {
             setIsLoading(false); // Stop loading
