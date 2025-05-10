@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UploadPDF } from '@/components/UploadPDF';
 import { QuestionCard } from '@/components/QuestionCard';
 import { ParsedQuestions } from '@/lib/parser';
+import Image from 'next/image';
 
 export default function Home() {
   //const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,12 @@ export default function Home() {
   return (
 
     <div className="grid grid-rows-[0px_0fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
+      <header className="absolute top-4 left-4 flex items-center gap-2">
+        <Image src="logo.svg" alt="Scrapytopics Logo" width="50" height="50" />
+        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Scrapy<span className="italic font-extralight">topics</span>
+        </span>
+      </header>
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <h1 className="text-4xl font-bold text-center sm:text-left transition-all duration-700 ease-in-out text-gray-900 dark:text-gray-100">
           {isProcessed ? 'Have fun' : 'Upload your PDF'}
