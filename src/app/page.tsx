@@ -46,6 +46,8 @@ export default function Home() {
         <Image src="logo.svg" alt="Scrapytopics Logo" width="50" height="50" />
         <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Scrapy<span className="italic font-extralight">topics</span>
+          <span className="text-lg font-semibold text-gray-900 dark:text-gray-100"> - </span>
+          <span className="text-lg font-extralight text-gray-600 dark:text-gray-100"> a delightful alternative </span>
         </span>
       </header>
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
