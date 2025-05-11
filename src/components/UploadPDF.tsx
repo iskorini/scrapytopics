@@ -68,6 +68,14 @@ export const UploadPDF = ({
                     />
                     <span className="text-gray-700 dark:text-gray-300">Randomize questions (not yet implemented)</span>
                 </label>
+                <div className="flex flex-col space-y-2">
+                    <input
+                        id="openai-key"
+                        type="password"
+                        placeholder="Paste OpenAI API key for extra features (coming soon)"
+                        className="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    />
+                </div>
             </div>
             <label className="px-4 py-2 border border-blue-400 text-blue-700 dark:border-blue-600 dark:text-blue-400 rounded cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center justify-center">
                 {isLoading ? (
