@@ -16,6 +16,12 @@ export default function Home() {
   const [hideUploader, setHideUploader] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
+  // Stato per memorizzare le risposte selezionate per ogni domanda
+  const [answersState, setAnswersState] = useState<Record<number, {
+    selectedAnswers: string[];
+    showSolution: boolean;
+    isCorrect: boolean | null;
+  }>>({});
 
   // Delay per nascondere l'uploader dopo parsing
   useEffect(() => {
@@ -100,6 +106,31 @@ export default function Home() {
             <QuestionCard
               questionNumber={currentQuestionIndex}
               data={parsedQuestions[currentQuestionIndex.toString()]}
+              selectedAnswers={answersState[currentQuestionIndex]?.selectedAnswers || []}
+              showSolution={answersState[currentQuestionIndex]?.showSolution || false}
+              isCorrect={answersState[currentQuestionIndex]?.isCorrect || null}
+              onAnswersChange={(answers) => {
+                setAnswersState(prev => ({
+                  ...prev,
+                  [currentQuestionIndex]: {
+                    ...prev[currentQuestionIndex],
+                    selectedAnswers: answers,
+                    showSolution: prev[currentQuestionIndex]?.showSolution || false,
+                    isCorrect: prev[currentQuestionIndex]?.isCorrect || null
+                  }
+                }));
+              }}
+              onSolutionShown={(isCorrect) => {
+                setAnswersState(prev => ({
+                  ...prev,
+                  [currentQuestionIndex]: {
+                    ...prev[currentQuestionIndex],
+                    selectedAnswers: prev[currentQuestionIndex]?.selectedAnswers || [],
+                    showSolution: true,
+                    isCorrect
+                  }
+                }));
+              }}
             />
             <div className="flex gap-4">
               <button

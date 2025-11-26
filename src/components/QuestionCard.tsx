@@ -13,18 +13,31 @@ type QuestionData = {
 type Props = {
     questionNumber: number;
     data: QuestionData;
+    selectedAnswers?: string[];
+    showSolution?: boolean;
+    isCorrect?: boolean | null;
+    onAnswersChange?: (answers: string[]) => void;
+    onSolutionShown?: (isCorrect: boolean) => void;
 };
 
-export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
-    const [showSolution, setShowSolution] = useState(false);
-    const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+export const QuestionCard: React.FC<Props> = ({
+    questionNumber,
+    data,
+    selectedAnswers: externalSelectedAnswers = [],
+    showSolution: externalShowSolution = false,
+    isCorrect: externalIsCorrect = null,
+    onAnswersChange,
+    onSolutionShown
+}) => {
+    const [showSolution, setShowSolution] = useState(externalShowSolution);
+    const [selectedAnswers, setSelectedAnswers] = useState<string[]>(externalSelectedAnswers);
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(externalIsCorrect);
 
     useEffect(() => {
-        setShowSolution(false);
-        setSelectedAnswers([]);
-        setIsCorrect(null);
-    }, [questionNumber]);
+        setShowSolution(externalShowSolution);
+        setSelectedAnswers(externalSelectedAnswers);
+        setIsCorrect(externalIsCorrect);
+    }, [questionNumber, externalShowSolution, externalSelectedAnswers, externalIsCorrect]);
 
     const isHighlighted = (key: string): boolean => {
         return showSolution && data.community_answer.includes(key);
@@ -37,12 +50,14 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
         if (showSolution) return;
 
         setSelectedAnswers(prev => {
-            if (prev.includes(key)) {
-                return prev.filter(k => k !== key);
-            } else if (prev.length < maxSelectable) {
-                return [...prev, key];
-            }
-            return prev;
+            const newAnswers = prev.includes(key)
+                ? prev.filter(k => k !== key)
+                : prev.length < maxSelectable
+                    ? [...prev, key]
+                    : prev;
+
+            onAnswersChange?.(newAnswers);
+            return newAnswers;
         });
     };
 
@@ -61,6 +76,7 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
         const validationResult = validateQuestion(data.proposed_answer, selectedAnswers);
         setIsCorrect(validationResult);
         setShowSolution(true);
+        onSolutionShown?.(validationResult);
     }
 
     return (
