@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Scrapy Topics
+
+A delightful alternative for interactive quiz learning. Transform PDF question banks into engaging, interactive quizzes with instant feedback and progress tracking.
+
+## Features
+
+- 📄 **PDF to JSON Conversion** - Parse PDF files containing multiple-choice questions into structured JSON format
+- 📝 **Interactive Quiz Interface** - Practice questions with an intuitive, user-friendly interface
+- ✅ **Instant Feedback** - Get immediate validation of your answers with visual feedback
+- 🎯 **Smart Answer Selection** - Automatic limit on selectable answers based on correct answer count
+- 🌓 **Dark Mode Support** - Seamless light/dark theme switching
+- 📊 **Progress Tracking** - Navigate through questions with keyboard shortcuts and direct question jumping
+- 💾 **Import/Export** - Load JSON question banks and export parsed data
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/iskorini/scrapytopics.git
+cd scrapytopics
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. Run the development server:
 ```bash
 npm run dev
 # or
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### For Students (Main Interface)
 
-## Learn More
+1. Navigate to the homepage
+2. Upload a JSON file containing your question bank
+3. Select answers by clicking checkboxes (limited to the number of correct answers)
+4. Click "Show solution" when ready to check your answers
+5. Navigate between questions using Previous/Next buttons or direct question number input
 
-To learn more about Next.js, take a look at the following resources:
+### For Administrators (PDF Conversion)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Navigate to `/admin`
+2. Upload a PDF file containing multiple-choice questions
+3. The system will automatically parse the questions
+4. Download the generated JSON file
+5. Use this JSON file in the main interface for practice
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Question Format
 
-## Deploy on Vercel
+The application expects questions in the following JSON structure:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```json
+{
+  "1": {
+    "question": "What is the correct answer?",
+    "answers": {
+      "A": "First option",
+      "B": "Second option",
+      "C": "Third option",
+      "D": "Fourth option"
+    },
+    "community_answer": ["A", "C"],
+    "proposed_answer": ["A", "C"],
+    "community_answer_score": "85%"
+  }
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Animations**: Framer Motion
+- **PDF Processing**: Custom parser with API route
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx          # Main quiz interface
+│   ├── admin/
+│   │   └── page.tsx      # PDF to JSON conversion page
+│   └── api/
+│       └── pdf2text/
+│           └── route.ts  # PDF processing endpoint
+├── components/
+│   ├── QuestionCard.tsx  # Interactive question component
+│   ├── UploadJSON.tsx    # JSON file uploader
+│   ├── UploadPDF.tsx     # PDF file uploader
+│   └── DownloadJSON.tsx  # JSON download button
+└── lib/
+    ├── parser.ts         # PDF text parsing logic
+    └── validator.ts      # Answer validation logic
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## Acknowledgments
+
+This README was written with assistance from Claude Sonnet 4.5.
+
+---
+
+Built with ❤️ by [iskorini](https://github.com/iskorini)
