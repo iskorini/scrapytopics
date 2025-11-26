@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { parsePdfTextToQuestions, ParsedQuestions } from "@/lib/parser";
+import { ParsedQuestions } from "@/lib/parser";
 
-
-export const UploadPDF = ({
+export const UploadJSON = ({
     setParsedQuestions,
     isProcessed,
     setIsProcessed,
@@ -14,6 +13,7 @@ export const UploadPDF = ({
     setIsProcessed: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -24,31 +24,35 @@ export const UploadPDF = ({
 
     const handleFileUpload = async (file: File) => {
         try {
-            setIsLoading(true); // Start loading
-            setIsProcessed(false); // Reset processed state
+            setIsLoading(true);
+            setIsProcessed(false);
+            setError(null);
+
             const reader = new FileReader();
             reader.onload = async () => {
-                const encodedPdf = (reader.result as string).split(",")[1]; // Extract Base64 content
-                const response = await fetch('/api/pdf2text', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ file_content: encodedPdf, filename: 'file.pdf' }),
-                });
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch PDF text: ${response.statusText}`);
+                try {
+                    const jsonString = reader.result as string;
+                    const parsedData = JSON.parse(jsonString) as ParsedQuestions;
+
+                    // Validate the structure
+                    if (typeof parsedData !== 'object' || parsedData === null) {
+                        throw new Error('Invalid JSON structure');
+                    }
+
+                    setParsedQuestions(parsedData);
+                    console.log("Loaded Questions:", parsedData);
+                    setIsProcessed(true);
+                } catch (parseError) {
+                    setError('Invalid JSON file format');
+                    console.error(parseError);
                 }
-                const data = await response.json();
-                const text = data.text;
-                const parsedQuestions = parsePdfTextToQuestions(text);
-                setParsedQuestions(parsedQuestions);
-                console.log("Parsed Questions:", parsedQuestions);
-                setIsProcessed(true); // Mark as processed
             };
-            reader.readAsDataURL(file); // Read file as Data URL
+            reader.readAsText(file);
         } catch (err) {
+            setError('Failed to read the JSON file');
             console.error(err);
         } finally {
-            setIsLoading(false); // Stop loading
+            setIsLoading(false);
         }
     };
 
@@ -58,15 +62,18 @@ export const UploadPDF = ({
                 {isLoading ? (
                     <div className="flex items-center gap-2">
                         <div className="animate-spin h-5 w-5 border-4 border-blue-400 dark:border-blue-600 border-t-transparent rounded-full"></div>
-                        <span>Processing...</span>
+                        <span>Loading...</span>
                     </div>
                 ) : isProcessed ? (
-                    <span className="text-green-600 dark:text-green-400 font-semibold">PDF Processed ✔</span>
+                    <span className="text-green-600 dark:text-green-400 font-semibold">JSON Loaded ✔</span>
                 ) : (
-                    <span>Upload PDF</span>
+                    <span>Upload JSON</span>
                 )}
-                <input type="file" accept="application/pdf" className="hidden" onChange={handleChange} />
+                <input type="file" accept="application/json" className="hidden" onChange={handleChange} />
             </label>
+            {error && (
+                <p className="mt-2 text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+            )}
         </div>
     );
 };

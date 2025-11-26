@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadPDF } from '@/components/UploadPDF';
+import { UploadJSON } from '@/components/UploadJSON';
 import { QuestionCard } from '@/components/QuestionCard';
 import { ParsedQuestions } from '@/lib/parser';
 import Image from 'next/image';
@@ -52,7 +52,7 @@ export default function Home() {
       </header>
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <h1 className="text-4xl font-bold text-center sm:text-left transition-all duration-700 ease-in-out text-gray-900 dark:text-gray-100">
-          {isProcessed ? 'Have fun' : 'Upload your PDF'}
+          {isProcessed ? 'Have fun' : 'Upload your JSON'}
         </h1>
 
         <AnimatePresence>
@@ -63,7 +63,7 @@ export default function Home() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -20, transition: { duration: 0.6 } }}
             >
-              <UploadPDF
+              <UploadJSON
                 setParsedQuestions={setParsedQuestions}
                 isProcessed={isProcessed}
                 setIsProcessed={setIsProcessed}
