@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadJSON } from '@/components/UploadJSON';
 import { QuestionCard } from '@/components/QuestionCard';
@@ -11,36 +11,44 @@ import Image from 'next/image';
 
 type QuizMode = 'all' | 'simulation';
 
+type AnswerState = {
+  selectedAnswers: string[];
+  showSolution: boolean;
+  isCorrect: boolean | null;
+};
+
+const UPLOAD_SUCCESS_DELAY_MS = 1200;
+const MAX_CACHED_ANSWERS = 1000;
+
 export default function Home() {
-  //const [error, setError] = useState<string | null>(null);
   const [parsedQuestions, setParsedQuestions] = useState<ParsedQuestions | null>(null);
   const [isProcessed, setIsProcessed] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(1);
-  const [hideUploader, setHideUploader] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [quizStarted, setQuizStarted] = useState(false);
+  const [isUploaderHidden, setIsUploaderHidden] = useState(false);
+  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+  const [isQuizStarted, setIsQuizStarted] = useState(false);
   const [quizMode, setQuizMode] = useState<QuizMode>('all');
   const [activeQuestions, setActiveQuestions] = useState<ParsedQuestions | null>(null);
-  const [showResults, setShowResults] = useState(false);
-  const [startTime, setStartTime] = useState<number | null>(null);
-
-  // Stato per memorizzare le risposte selezionate per ogni domanda
-  const [answersState, setAnswersState] = useState<Record<number, {
-    selectedAnswers: string[];
-    showSolution: boolean;
-    isCorrect: boolean | null;
-  }>>({});
+  const [isResultsVisible, setIsResultsVisible] = useState(false);
+  const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
+  const [answersState, setAnswersState] = useState<Record<number, AnswerState>>({});
 
   // Delay per nascondere l'uploader dopo parsing
   useEffect(() => {
-    if (isProcessed) {
-      const timeout = setTimeout(() => {
-        setHideUploader(true);
-        setShowSettings(true);
-      }, 1200); // 1.2 secondi di delay per mostrare l'animazione
+    let timeoutId: NodeJS.Timeout | undefined;
 
-      return () => clearTimeout(timeout);
+    if (isProcessed) {
+      timeoutId = setTimeout(() => {
+        setIsUploaderHidden(true);
+        setIsSettingsVisible(true);
+      }, UPLOAD_SUCCESS_DELAY_MS);
     }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [isProcessed]);
 
   const handleNext = () => {
@@ -58,15 +66,31 @@ export default function Home() {
   };
 
   const handleAnswersChange = useCallback((questionIndex: number, answers: string[]) => {
-    setAnswersState(prev => ({
-      ...prev,
-      [questionIndex]: {
-        ...prev[questionIndex],
-        selectedAnswers: answers,
-        showSolution: prev[questionIndex]?.showSolution || false,
-        isCorrect: prev[questionIndex]?.isCorrect || null
+    setAnswersState(prev => {
+      const newState = {
+        ...prev,
+        [questionIndex]: {
+          ...prev[questionIndex],
+          selectedAnswers: answers,
+          showSolution: prev[questionIndex]?.showSolution || false,
+          isCorrect: prev[questionIndex]?.isCorrect || null
+        }
+      };
+
+      // Limita la dimensione dello stato se supera il massimo
+      const stateKeys = Object.keys(newState);
+      if (stateKeys.length > MAX_CACHED_ANSWERS) {
+        // Rimuovi le risposte più vecchie (con indici più bassi)
+        const sortedKeys = stateKeys.map(Number).sort((a, b) => a - b);
+        const keysToRemove = sortedKeys.slice(0, stateKeys.length - MAX_CACHED_ANSWERS);
+
+        keysToRemove.forEach(key => {
+          delete newState[key];
+        });
       }
-    }));
+
+      return newState;
+    });
   }, []);
 
   const handleSolutionShown = useCallback((questionIndex: number, isCorrect: boolean) => {
@@ -80,6 +104,25 @@ export default function Home() {
       }
     }));
   }, []);
+
+  // Memoizza il calcolo delle statistiche per evitare ricalcoli costosi
+  const quizStatistics = useMemo(() => {
+    if (!activeQuestions) return null;
+
+    const totalQuestions = Object.keys(activeQuestions).length;
+    const correctAnswers = Object.values(answersState).filter(a => a.isCorrect === true).length;
+    const answeredCount = Object.values(answersState).filter(a => a.showSolution).length;
+    const unansweredCount = totalQuestions - answeredCount;
+    const answeredWrong = Object.values(answersState).filter(a => a.isCorrect === false).length;
+
+    return {
+      totalQuestions,
+      correctAnswers,
+      wrongAnswers: answeredWrong + unansweredCount,
+      unanswered: unansweredCount,
+      timeElapsed: quizStartTime ? Math.floor((Date.now() - quizStartTime) / 1000) : undefined
+    };
+  }, [activeQuestions, answersState, quizStartTime]);
 
   return (
 
@@ -98,7 +141,7 @@ export default function Home() {
         </h1>
 
         <AnimatePresence>
-          {!hideUploader && (
+          {!isUploaderHidden && (
             <motion.div
               key="uploader"
               initial={{ opacity: 1 }}
@@ -114,7 +157,7 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {parsedQuestions && showSettings && !quizStarted && (
+        {parsedQuestions && isSettingsVisible && !isQuizStarted && (
           <motion.div
             key="settings"
             initial={{ opacity: 0, y: 20 }}
@@ -125,7 +168,7 @@ export default function Home() {
               questionCount={Object.keys(parsedQuestions).length}
               onStartQuiz={(mode, simulationCount) => {
                 setQuizMode(mode);
-                setStartTime(Date.now());
+                setQuizStartTime(Date.now());
 
                 if (mode === 'simulation' && simulationCount) {
                   // Seleziona casualmente N domande
@@ -147,13 +190,13 @@ export default function Home() {
 
                 setCurrentQuestionIndex(1);
                 setAnswersState({});
-                setQuizStarted(true);
+                setIsQuizStarted(true);
               }}
             />
           </motion.div>
         )}
 
-        {activeQuestions && quizStarted && !showResults && (
+        {activeQuestions && isQuizStarted && !isResultsVisible && (
           <motion.div
             key="question-card"
             initial={{ opacity: 0, y: 20 }}
@@ -175,13 +218,18 @@ export default function Home() {
                   onClick={handlePrev}
                   disabled={currentQuestionIndex === 1}
                   className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+                  aria-label="Go to previous question"
                 >
                   Previous Question
                 </button>
               )}
               {quizMode === 'all' && (
                 <div className="flex items-center gap-2">
+                  <label htmlFor="question-jump" className="sr-only">
+                    Jump to question number
+                  </label>
                   <input
+                    id="question-jump"
                     type="text"
                     value={currentQuestionIndex || ''}
                     onChange={(e) => {
@@ -221,7 +269,7 @@ export default function Home() {
                   const totalQuestions = activeQuestions ? Object.keys(activeQuestions).length : 0;
                   if (currentQuestionIndex === totalQuestions && quizMode === 'simulation') {
                     // Fine del quiz in modalità simulation
-                    setShowResults(true);
+                    setIsResultsVisible(true);
                   } else {
                     handleNext();
                   }
@@ -232,6 +280,11 @@ export default function Home() {
                   currentQuestionIndex === Object.keys(activeQuestions).length
                 }
                 className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 dark:bg-blue-400 dark:hover:bg-blue-500"
+                aria-label={
+                  quizMode === 'simulation' && activeQuestions && currentQuestionIndex === Object.keys(activeQuestions).length
+                    ? 'Finish quiz and view results'
+                    : 'Go to next question'
+                }
               >
                 {quizMode === 'simulation' && activeQuestions && currentQuestionIndex === Object.keys(activeQuestions).length
                   ? 'Finish Quiz'
@@ -242,28 +295,18 @@ export default function Home() {
           </motion.div>
         )}
 
-        {showResults && activeQuestions && (
+        {isResultsVisible && activeQuestions && quizStatistics && (
           <motion.div
             key="results"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
           >
             <QuizResults
-              stats={{
-                totalQuestions: Object.keys(activeQuestions).length,
-                correctAnswers: Object.values(answersState).filter(a => a.isCorrect === true).length,
-                wrongAnswers: (() => {
-                  const answeredWrong = Object.values(answersState).filter(a => a.isCorrect === false).length;
-                  const unansweredCount = Object.keys(activeQuestions).length - Object.values(answersState).filter(a => a.showSolution).length;
-                  return answeredWrong + unansweredCount;
-                })(),
-                unanswered: Object.keys(activeQuestions).length - Object.values(answersState).filter(a => a.showSolution).length,
-                timeElapsed: startTime ? Math.floor((Date.now() - startTime) / 1000) : undefined
-              }}
+              stats={quizStatistics}
               onRestart={() => {
-                setShowResults(false);
-                setShowSettings(true);
-                setQuizStarted(false);
+                setIsResultsVisible(false);
+                setIsSettingsVisible(true);
+                setIsQuizStarted(false);
                 setCurrentQuestionIndex(1);
                 setAnswersState({});
                 setActiveQuestions(null);

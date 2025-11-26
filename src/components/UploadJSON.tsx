@@ -3,14 +3,38 @@
 import React, { useState } from "react";
 import { ParsedQuestions } from "@/lib/parser";
 
-export const UploadJSON = ({
-    setParsedQuestions,
-    isProcessed,
-    setIsProcessed,
-}: {
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+type UploadJSONProps = {
     setParsedQuestions: React.Dispatch<React.SetStateAction<ParsedQuestions | null>>;
     isProcessed: boolean;
     setIsProcessed: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+const validateQuestionsSchema = (data: unknown): data is ParsedQuestions => {
+    if (typeof data !== 'object' || data === null) return false;
+
+    const questions = data as Record<string, unknown>;
+
+    // Validate each question has required structure
+    return Object.values(questions).every(q => {
+        if (typeof q !== 'object' || q === null) return false;
+        const question = q as Record<string, unknown>;
+
+        return (
+            typeof question.question === 'string' &&
+            typeof question.answers === 'object' &&
+            Array.isArray(question.community_answer) &&
+            Array.isArray(question.proposed_answer) &&
+            typeof question.community_answer_score === 'string'
+        );
+    });
+};
+
+export const UploadJSON: React.FC<UploadJSONProps> = ({
+    setParsedQuestions,
+    isProcessed,
+    setIsProcessed,
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -28,28 +52,39 @@ export const UploadJSON = ({
             setIsProcessed(false);
             setError(null);
 
+            // Validate file size
+            if (file.size > MAX_FILE_SIZE) {
+                setError(`File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = async () => {
                 try {
                     const jsonString = reader.result as string;
-                    const parsedData = JSON.parse(jsonString) as ParsedQuestions;
+                    const parsedData = JSON.parse(jsonString);
 
-                    // Validate the structure
-                    if (typeof parsedData !== 'object' || parsedData === null) {
-                        throw new Error('Invalid JSON structure');
+                    // Validate the schema
+                    if (!validateQuestionsSchema(parsedData)) {
+                        throw new Error('Invalid question format');
                     }
 
                     setParsedQuestions(parsedData);
                     console.log("Loaded Questions:", parsedData);
                     setIsProcessed(true);
                 } catch (parseError) {
-                    setError('Invalid JSON file format');
+                    setError('Invalid JSON file format. Please check the file structure.');
                     console.error(parseError);
                 }
             };
+
+            reader.onerror = () => {
+                setError('Failed to read the file');
+            };
+
             reader.readAsText(file);
         } catch (err) {
-            setError('Failed to read the JSON file');
+            setError('Failed to process the JSON file');
             console.error(err);
         } finally {
             setIsLoading(false);

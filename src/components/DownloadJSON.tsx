@@ -1,11 +1,11 @@
 import React from 'react';
 import { ParsedQuestions } from '@/lib/parser';
 
-type Props = {
+type DownloadJSONProps = {
     parsedQuestions: ParsedQuestions;
 };
 
-export const DownloadJSON: React.FC<Props> = ({ parsedQuestions }) => {
+export const DownloadJSON: React.FC<DownloadJSONProps> = ({ parsedQuestions }) => {
     const handleDownload = () => {
         const jsonString = JSON.stringify(parsedQuestions, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });

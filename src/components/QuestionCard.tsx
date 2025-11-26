@@ -10,7 +10,7 @@ type QuestionData = {
     community_answer_score: string;
 };
 
-type Props = {
+type QuestionCardProps = {
     questionNumber: number;
     data: QuestionData;
     selectedAnswers?: string[];
@@ -20,7 +20,7 @@ type Props = {
     onSolutionShown?: (isCorrect: boolean) => void;
 };
 
-export const QuestionCard: React.FC<Props> = ({
+export const QuestionCard: React.FC<QuestionCardProps> = ({
     questionNumber,
     data,
     selectedAnswers: externalSelectedAnswers = [],
@@ -33,17 +33,17 @@ export const QuestionCard: React.FC<Props> = ({
     const [selectedAnswers, setSelectedAnswers] = useState<string[]>(externalSelectedAnswers);
     const [isCorrect, setIsCorrect] = useState<boolean | null>(externalIsCorrect);
     const isInitialMount = useRef(true);
-    const prevQuestionNumber = useRef(questionNumber);
+    const prevQuestionNumber = useRef<number | null>(null);
 
     // Reset solo quando cambia la domanda
     useEffect(() => {
-        if (prevQuestionNumber.current !== questionNumber) {
+        if (prevQuestionNumber.current !== null && prevQuestionNumber.current !== questionNumber) {
             setShowSolution(externalShowSolution);
             setSelectedAnswers(externalSelectedAnswers);
             setIsCorrect(externalIsCorrect);
             isInitialMount.current = true;
-            prevQuestionNumber.current = questionNumber;
         }
+        prevQuestionNumber.current = questionNumber;
     }, [questionNumber, externalShowSolution, externalSelectedAnswers, externalIsCorrect]);
 
     // Notifica il padre quando selectedAnswers cambia SOLO per interazioni dell'utente
@@ -99,10 +99,23 @@ export const QuestionCard: React.FC<Props> = ({
     }
 
     return (
-        <div className="border rounded-xl p-4 my-4 shadow-sm w-full max-w-5xl bg-white dark:bg-gray-800">
-            <h2 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Question {questionNumber}</h2>
+        <div
+            className="border rounded-xl p-4 my-4 shadow-sm w-full max-w-5xl bg-white dark:bg-gray-800"
+            role="article"
+            aria-labelledby={`question-${questionNumber}-title`}
+        >
+            <h2
+                id={`question-${questionNumber}-title`}
+                className="font-semibold mb-2 text-gray-900 dark:text-gray-100"
+            >
+                Question {questionNumber}
+            </h2>
             <p className="mb-3 text-gray-700 dark:text-gray-300">{data.question}</p>
-            <div className="space-y-1 mb-4">
+            <div
+                className="space-y-1 mb-4"
+                role="group"
+                aria-label={`Answers for question ${questionNumber}`}
+            >
                 {Object.entries(data.answers).map(([key, value]) => (
                     <div
                         key={key}
@@ -116,6 +129,7 @@ export const QuestionCard: React.FC<Props> = ({
                                 onChange={() => handleCheckboxChange(key)}
                                 disabled={showSolution}
                                 className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 cursor-pointer disabled:cursor-default"
+                                aria-label={`Answer ${key}: ${value}`}
                             />
                             <div className="flex-1">
                                 <span className="font-medium text-gray-900 dark:text-gray-100">{key})</span>
@@ -137,6 +151,11 @@ export const QuestionCard: React.FC<Props> = ({
                         }`}
                     disabled={showSolution || !canShowSolution}
                     onClick={handleShowSolution}
+                    aria-label={showSolution
+                        ? `Solution shown: ${isCorrect ? 'Correct answer' : 'Incorrect answer'}`
+                        : 'Show solution for this question'
+                    }
+                    aria-live="polite"
                 >
                     {showSolution
                         ? (isCorrect ? '✓ Correct!' : '✗ Incorrect')
@@ -146,10 +165,17 @@ export const QuestionCard: React.FC<Props> = ({
             </div>
 
             {showSolution && (
-                <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+                <div
+                    className="mt-4 text-sm text-gray-700 dark:text-gray-300"
+                    role="region"
+                    aria-label="Solution details"
+                >
                     {
                         isCorrect !== null && (
-                            <p className={`mb-2 font-semibold ${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            <p
+                                className={`mb-2 font-semibold ${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                                aria-live="assertive"
+                            >
                                 {isCorrect ? '✓ Correct!' : '✗ Incorrect'}
                             </p>
                         )

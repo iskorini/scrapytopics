@@ -4,12 +4,12 @@ import React, { useState } from "react";
 
 type QuizMode = 'all' | 'simulation';
 
-type Props = {
+type QuizSettingsProps = {
     questionCount: number;
     onStartQuiz?: (mode: QuizMode, simulationCount?: number) => void;
 };
 
-export const QuizSettings: React.FC<Props> = ({ questionCount, onStartQuiz }) => {
+export const QuizSettings: React.FC<QuizSettingsProps> = ({ questionCount, onStartQuiz }) => {
     const [mode, setMode] = useState<QuizMode>('all');
     const [simulationCount, setSimulationCount] = useState<number>(Math.min(10, questionCount));
 
@@ -39,8 +39,8 @@ export const QuizSettings: React.FC<Props> = ({ questionCount, onStartQuiz }) =>
 
                 {/* Simulation Mode */}
                 <label className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${mode === 'simulation'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-                        : 'border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
+                    : 'border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700'
                     }`}>
                     <input
                         type="radio"
@@ -85,8 +85,8 @@ export const QuizSettings: React.FC<Props> = ({ questionCount, onStartQuiz }) =>
 
                 {/* All Mode */}
                 <label className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${mode === 'all'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-                        : 'border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
+                    : 'border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700'
                     }`}>
                     <input
                         type="radio"

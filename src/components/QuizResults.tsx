@@ -10,12 +10,12 @@ type QuizStats = {
     timeElapsed?: number; // in seconds
 };
 
-type Props = {
+type QuizResultsProps = {
     stats: QuizStats;
     onRestart: () => void;
 };
 
-export const QuizResults: React.FC<Props> = ({ stats, onRestart }) => {
+export const QuizResults: React.FC<QuizResultsProps> = ({ stats, onRestart }) => {
     const percentage = stats.totalQuestions > 0
         ? Math.round((stats.correctAnswers / stats.totalQuestions) * 100)
         : 0;
