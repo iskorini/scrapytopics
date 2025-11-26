@@ -5,8 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UploadJSON } from '@/components/UploadJSON';
 import { QuestionCard } from '@/components/QuestionCard';
 import { QuizSettings } from '@/components/QuizSettings';
+import { QuizResults } from '@/components/QuizResults';
 import { ParsedQuestions } from '@/lib/parser';
 import Image from 'next/image';
+
+type QuizMode = 'all' | 'simulation';
 
 export default function Home() {
   //const [error, setError] = useState<string | null>(null);
@@ -16,6 +19,11 @@ export default function Home() {
   const [hideUploader, setHideUploader] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
+  const [quizMode, setQuizMode] = useState<QuizMode>('all');
+  const [activeQuestions, setActiveQuestions] = useState<ParsedQuestions | null>(null);
+  const [showResults, setShowResults] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+
   // Stato per memorizzare le risposte selezionate per ogni domanda
   const [answersState, setAnswersState] = useState<Record<number, {
     selectedAnswers: string[];
@@ -115,12 +123,37 @@ export default function Home() {
           >
             <QuizSettings
               questionCount={Object.keys(parsedQuestions).length}
-              onStartQuiz={() => setQuizStarted(true)}
+              onStartQuiz={(mode, simulationCount) => {
+                setQuizMode(mode);
+                setStartTime(Date.now());
+
+                if (mode === 'simulation' && simulationCount) {
+                  // Seleziona casualmente N domande
+                  const allQuestionKeys = Object.keys(parsedQuestions);
+                  const shuffled = [...allQuestionKeys].sort(() => Math.random() - 0.5);
+                  const selected = shuffled.slice(0, simulationCount);
+
+                  // Crea un nuovo oggetto con solo le domande selezionate
+                  const selectedQuestions: ParsedQuestions = {};
+                  selected.forEach((key, index) => {
+                    selectedQuestions[(index + 1).toString()] = parsedQuestions[key];
+                  });
+
+                  setActiveQuestions(selectedQuestions);
+                } else {
+                  // Modalità 'all': usa tutte le domande
+                  setActiveQuestions(parsedQuestions);
+                }
+
+                setCurrentQuestionIndex(1);
+                setAnswersState({});
+                setQuizStarted(true);
+              }}
             />
           </motion.div>
         )}
 
-        {parsedQuestions && quizStarted && (
+        {activeQuestions && quizStarted && !showResults && (
           <motion.div
             key="question-card"
             initial={{ opacity: 0, y: 20 }}
@@ -129,7 +162,7 @@ export default function Home() {
           >
             <QuestionCard
               questionNumber={currentQuestionIndex}
-              data={parsedQuestions[currentQuestionIndex.toString()]}
+              data={activeQuestions[currentQuestionIndex.toString()]}
               selectedAnswers={answersState[currentQuestionIndex]?.selectedAnswers || []}
               showSolution={answersState[currentQuestionIndex]?.showSolution || false}
               isCorrect={answersState[currentQuestionIndex]?.isCorrect || null}
@@ -137,56 +170,101 @@ export default function Home() {
               onSolutionShown={(isCorrect) => handleSolutionShown(currentQuestionIndex, isCorrect)}
             />
             <div className="flex gap-4">
-              <button
-                onClick={handlePrev}
-                disabled={currentQuestionIndex === 1}
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-              >
-                Previous Question
-              </button>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={currentQuestionIndex || ''}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    if (newValue === '' || /^[0-9]*$/.test(newValue)) {
-                      const parsedValue = newValue === '' ? 0 : parseInt(newValue, 10);
-                      if (
-                        parsedValue >= 1 &&
-                        parsedValue <= Object.keys(parsedQuestions).length
-                      ) {
-                        setCurrentQuestionIndex(parsedValue);
+              {quizMode === 'all' && (
+                <button
+                  onClick={handlePrev}
+                  disabled={currentQuestionIndex === 1}
+                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+                >
+                  Previous Question
+                </button>
+              )}
+              {quizMode === 'all' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={currentQuestionIndex || ''}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      if (newValue === '' || /^[0-9]*$/.test(newValue)) {
+                        const parsedValue = newValue === '' ? 0 : parseInt(newValue, 10);
+                        if (
+                          activeQuestions &&
+                          parsedValue >= 1 &&
+                          parsedValue <= Object.keys(activeQuestions).length
+                        ) {
+                          setCurrentQuestionIndex(parsedValue);
+                        }
                       }
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const newIndex = currentQuestionIndex;
-                      if (
-                        newIndex >= 1 &&
-                        newIndex <= Object.keys(parsedQuestions).length
-                      ) {
-                        setCurrentQuestionIndex(newIndex);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const newIndex = currentQuestionIndex;
+                        if (
+                          activeQuestions &&
+                          newIndex >= 1 &&
+                          newIndex <= Object.keys(activeQuestions).length
+                        ) {
+                          setCurrentQuestionIndex(newIndex);
+                        }
                       }
-                    }
-                  }}
-                  className="w-16 px-2 py-1 text-center border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
-                />
-                <span className="text-gray-700 dark:text-gray-300">
-                  / {Object.keys(parsedQuestions).length}
-                </span>
-              </div>
+                    }}
+                    className="w-16 px-2 py-1 text-center border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">
+                    / {activeQuestions ? Object.keys(activeQuestions).length : 0}
+                  </span>
+                </div>
+              )}
               <button
-                onClick={handleNext}
+                onClick={() => {
+                  const totalQuestions = activeQuestions ? Object.keys(activeQuestions).length : 0;
+                  if (currentQuestionIndex === totalQuestions && quizMode === 'simulation') {
+                    // Fine del quiz in modalità simulation
+                    setShowResults(true);
+                  } else {
+                    handleNext();
+                  }
+                }}
                 disabled={
-                  currentQuestionIndex === Object.keys(parsedQuestions).length
+                  quizMode === 'all' &&
+                  activeQuestions &&
+                  currentQuestionIndex === Object.keys(activeQuestions).length
                 }
                 className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 dark:bg-blue-400 dark:hover:bg-blue-500"
               >
-                Next Question
+                {quizMode === 'simulation' && activeQuestions && currentQuestionIndex === Object.keys(activeQuestions).length
+                  ? 'Finish Quiz'
+                  : 'Next Question'
+                }
               </button>
             </div>
+          </motion.div>
+        )}
+
+        {showResults && activeQuestions && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
+          >
+            <QuizResults
+              stats={{
+                totalQuestions: Object.keys(activeQuestions).length,
+                correctAnswers: Object.values(answersState).filter(a => a.isCorrect === true).length,
+                wrongAnswers: Object.values(answersState).filter(a => a.isCorrect === false).length,
+                unanswered: Object.keys(activeQuestions).length - Object.values(answersState).filter(a => a.showSolution).length,
+                timeElapsed: startTime ? Math.floor((Date.now() - startTime) / 1000) : undefined
+              }}
+              onRestart={() => {
+                setShowResults(false);
+                setShowSettings(true);
+                setQuizStarted(false);
+                setCurrentQuestionIndex(1);
+                setAnswersState({});
+                setActiveQuestions(null);
+              }}
+            />
           </motion.div>
         )}
       </main>
