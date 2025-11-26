@@ -1,5 +1,5 @@
 // components/QuestionCard.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { validateQuestion } from "@/lib/validator";
 
 type QuestionData = {
@@ -32,12 +32,33 @@ export const QuestionCard: React.FC<Props> = ({
     const [showSolution, setShowSolution] = useState(externalShowSolution);
     const [selectedAnswers, setSelectedAnswers] = useState<string[]>(externalSelectedAnswers);
     const [isCorrect, setIsCorrect] = useState<boolean | null>(externalIsCorrect);
+    const isInitialMount = useRef(true);
+    const prevQuestionNumber = useRef(questionNumber);
 
+    // Reset solo quando cambia la domanda
     useEffect(() => {
-        setShowSolution(externalShowSolution);
-        setSelectedAnswers(externalSelectedAnswers);
-        setIsCorrect(externalIsCorrect);
+        if (prevQuestionNumber.current !== questionNumber) {
+            setShowSolution(externalShowSolution);
+            setSelectedAnswers(externalSelectedAnswers);
+            setIsCorrect(externalIsCorrect);
+            isInitialMount.current = true;
+            prevQuestionNumber.current = questionNumber;
+        }
     }, [questionNumber, externalShowSolution, externalSelectedAnswers, externalIsCorrect]);
+
+    // Notifica il padre quando selectedAnswers cambia SOLO per interazioni dell'utente
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        // Controlla se le risposte sono diverse da quelle esterne
+        const isDifferent = JSON.stringify(selectedAnswers.sort()) !== JSON.stringify(externalSelectedAnswers.sort());
+        if (isDifferent) {
+            onAnswersChange?.(selectedAnswers);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedAnswers]);
 
     const isHighlighted = (key: string): boolean => {
         return showSolution && data.community_answer.includes(key);
@@ -50,14 +71,12 @@ export const QuestionCard: React.FC<Props> = ({
         if (showSolution) return;
 
         setSelectedAnswers(prev => {
-            const newAnswers = prev.includes(key)
-                ? prev.filter(k => k !== key)
-                : prev.length < maxSelectable
-                    ? [...prev, key]
-                    : prev;
-
-            onAnswersChange?.(newAnswers);
-            return newAnswers;
+            if (prev.includes(key)) {
+                return prev.filter(k => k !== key);
+            } else if (prev.length < maxSelectable) {
+                return [...prev, key];
+            }
+            return prev;
         });
     };
 

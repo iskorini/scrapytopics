@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadJSON } from '@/components/UploadJSON';
 import { QuestionCard } from '@/components/QuestionCard';
@@ -48,6 +48,30 @@ export default function Home() {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
+
+  const handleAnswersChange = useCallback((questionIndex: number, answers: string[]) => {
+    setAnswersState(prev => ({
+      ...prev,
+      [questionIndex]: {
+        ...prev[questionIndex],
+        selectedAnswers: answers,
+        showSolution: prev[questionIndex]?.showSolution || false,
+        isCorrect: prev[questionIndex]?.isCorrect || null
+      }
+    }));
+  }, []);
+
+  const handleSolutionShown = useCallback((questionIndex: number, isCorrect: boolean) => {
+    setAnswersState(prev => ({
+      ...prev,
+      [questionIndex]: {
+        ...prev[questionIndex],
+        selectedAnswers: prev[questionIndex]?.selectedAnswers || [],
+        showSolution: true,
+        isCorrect
+      }
+    }));
+  }, []);
 
   return (
 
@@ -109,28 +133,8 @@ export default function Home() {
               selectedAnswers={answersState[currentQuestionIndex]?.selectedAnswers || []}
               showSolution={answersState[currentQuestionIndex]?.showSolution || false}
               isCorrect={answersState[currentQuestionIndex]?.isCorrect || null}
-              onAnswersChange={(answers) => {
-                setAnswersState(prev => ({
-                  ...prev,
-                  [currentQuestionIndex]: {
-                    ...prev[currentQuestionIndex],
-                    selectedAnswers: answers,
-                    showSolution: prev[currentQuestionIndex]?.showSolution || false,
-                    isCorrect: prev[currentQuestionIndex]?.isCorrect || null
-                  }
-                }));
-              }}
-              onSolutionShown={(isCorrect) => {
-                setAnswersState(prev => ({
-                  ...prev,
-                  [currentQuestionIndex]: {
-                    ...prev[currentQuestionIndex],
-                    selectedAnswers: prev[currentQuestionIndex]?.selectedAnswers || [],
-                    showSolution: true,
-                    isCorrect
-                  }
-                }));
-              }}
+              onAnswersChange={(answers) => handleAnswersChange(currentQuestionIndex, answers)}
+              onSolutionShown={(isCorrect) => handleSolutionShown(currentQuestionIndex, isCorrect)}
             />
             <div className="flex gap-4">
               <button
