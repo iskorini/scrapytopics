@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadJSON } from '@/components/UploadJSON';
 import { QuestionCard } from '@/components/QuestionCard';
+import { QuizSettings } from '@/components/QuizSettings';
 import { ParsedQuestions } from '@/lib/parser';
 import Image from 'next/image';
 
@@ -13,13 +14,16 @@ export default function Home() {
   const [isProcessed, setIsProcessed] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(1);
   const [hideUploader, setHideUploader] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
 
-  // Delay per nascondere l’uploader dopo parsing
+  // Delay per nascondere l'uploader dopo parsing
   useEffect(() => {
     if (isProcessed) {
       const timeout = setTimeout(() => {
         setHideUploader(true);
-      }, 1200); // 1.2 secondi di delay per mostrare l’animazione
+        setShowSettings(true);
+      }, 1200); // 1.2 secondi di delay per mostrare l'animazione
 
       return () => clearTimeout(timeout);
     }
@@ -72,7 +76,21 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {parsedQuestions && hideUploader && (
+        {parsedQuestions && showSettings && !quizStarted && (
+          <motion.div
+            key="settings"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
+            className="flex flex-col items-center gap-4"
+          >
+            <QuizSettings
+              questionCount={Object.keys(parsedQuestions).length}
+              onStartQuiz={() => setQuizStarted(true)}
+            />
+          </motion.div>
+        )}
+
+        {parsedQuestions && quizStarted && (
           <motion.div
             key="question-card"
             initial={{ opacity: 0, y: 20 }}
