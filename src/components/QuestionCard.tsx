@@ -1,5 +1,6 @@
 // components/QuestionCard.tsx
 import React, { useEffect, useState } from "react";
+import { validateQuestion } from "@/lib/validator";
 
 type QuestionData = {
     question: string;
@@ -17,10 +18,12 @@ type Props = {
 export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
     const [showSolution, setShowSolution] = useState(false);
     const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
     useEffect(() => {
         setShowSolution(false);
         setSelectedAnswers([]);
+        setIsCorrect(null);
     }, [questionNumber]);
 
     const isHighlighted = (key: string): boolean => {
@@ -54,6 +57,12 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
         return `${baseStyle} border border-gray-200 dark:bg-gray-700 dark:border-gray-600`;
     };
 
+    const handleShowSolution = () => {
+        const validationResult = validateQuestion(data.proposed_answer, selectedAnswers);
+        setIsCorrect(validationResult);
+        setShowSolution(true);
+    }
+
     return (
         <div className="border rounded-xl p-4 my-4 shadow-sm w-full max-w-5xl bg-white dark:bg-gray-800">
             <h2 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Question {questionNumber}</h2>
@@ -83,19 +92,33 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
             </div>
             <div className="flex justify-center">
                 <button
-                    className={`px-4 py-2 rounded ${showSolution || !canShowSolution
+                    className={`px-4 py-2 rounded ${showSolution
+                        ? isCorrect
+                            ? "bg-green-600 text-white cursor-default dark:bg-green-500"
+                            : "bg-red-600 text-white cursor-default dark:bg-red-500"
+                        : !canShowSolution
                             ? "bg-gray-200 text-gray-600 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
                             : "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                         }`}
                     disabled={showSolution || !canShowSolution}
-                    onClick={() => setShowSolution(true)}
+                    onClick={handleShowSolution}
                 >
-                    show solution
+                    {showSolution
+                        ? (isCorrect ? '✓ Correct!' : '✗ Incorrect')
+                        : 'Show solution'
+                    }
                 </button>
             </div>
 
             {showSolution && (
                 <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+                    {
+                        isCorrect !== null && (
+                            <p className={`mb-2 font-semibold ${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                {isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+                            </p>
+                        )
+                    }
                     <p>
                         <span className="font-semibold text-gray-900 dark:text-gray-100">Community answer:</span>{" "}
                         {data.community_answer.join(", ")} ({data.community_answer_score})
