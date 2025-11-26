@@ -34,6 +34,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
     const [isCorrect, setIsCorrect] = useState<boolean | null>(externalIsCorrect);
     const isInitialMount = useRef(true);
     const prevQuestionNumber = useRef<number | null>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
 
     // Reset solo quando cambia la domanda
     useEffect(() => {
@@ -42,6 +43,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             setSelectedAnswers(externalSelectedAnswers);
             setIsCorrect(externalIsCorrect);
             isInitialMount.current = true;
+
+            // Focus sul nuovo contenuto per screen readers
+            if (cardRef.current) {
+                cardRef.current.focus();
+            }
         }
         prevQuestionNumber.current = questionNumber;
     }, [questionNumber, externalShowSolution, externalSelectedAnswers, externalIsCorrect]);
@@ -100,7 +106,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
     return (
         <div
-            className="border rounded-xl p-4 my-4 shadow-sm w-full max-w-5xl bg-white dark:bg-gray-800"
+            ref={cardRef}
+            tabIndex={-1}
+            className="border rounded-xl p-4 my-4 shadow-sm w-full max-w-5xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             role="article"
             aria-labelledby={`question-${questionNumber}-title`}
         >
@@ -111,6 +119,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 Question {questionNumber}
             </h2>
             <p className="mb-3 text-gray-700 dark:text-gray-300">{data.question}</p>
+
+            {/* Live region for answer selection feedback */}
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+                {selectedAnswers.length} of {maxSelectable} answers selected
+                {selectedAnswers.length === maxSelectable && " - Maximum reached"}
+            </div>
+
             <div
                 className="space-y-1 mb-4"
                 role="group"
@@ -121,6 +136,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                         key={key}
                         className={getAnswerStyle(key)}
                         onClick={() => handleCheckboxChange(key)}
+                        onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && !showSolution) {
+                                e.preventDefault();
+                                handleCheckboxChange(key);
+                            }
+                        }}
+                        role="button"
+                        tabIndex={showSolution ? -1 : 0}
+                        aria-pressed={selectedAnswers.includes(key)}
+                        aria-disabled={showSolution}
                     >
                         <label className="flex items-start gap-2 cursor-pointer">
                             <input
@@ -158,7 +183,23 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                     aria-live="polite"
                 >
                     {showSolution
-                        ? (isCorrect ? '✓ Correct!' : '✗ Incorrect')
+                        ? isCorrect
+                            ? (
+                                <span className="flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    Correct!
+                                </span>
+                            )
+                            : (
+                                <span className="flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                    Incorrect
+                                </span>
+                            )
                         : 'Show solution'
                     }
                 </button>
@@ -173,10 +214,24 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                     {
                         isCorrect !== null && (
                             <p
-                                className={`mb-2 font-semibold ${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                                className={`mb-2 font-semibold flex items-center gap-2 ${isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                                 aria-live="assertive"
                             >
-                                {isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+                                {isCorrect ? (
+                                    <>
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        Correct!
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                        Incorrect
+                                    </>
+                                )}
                             </p>
                         )
                     }

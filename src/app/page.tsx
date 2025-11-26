@@ -125,9 +125,16 @@ export default function Home() {
   }, [activeQuestions, answersState, quizStartTime]);
 
   return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Skip to main content link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-blue-600 text-white px-4 py-2 rounded shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        Skip to main content
+      </a>
 
-    <div className="grid grid-rows-[0px_0fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
-      <header className="absolute top-4 left-4 flex items-center gap-2">
+      <header role="banner" className="absolute top-4 left-4 flex items-center gap-2">
         <Image src="logo.svg" alt="Scrapytopics Logo" width="50" height="50" />
         <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Scrapy<span className="italic font-extralight">topics</span>
@@ -135,188 +142,195 @@ export default function Home() {
           <span className="text-lg font-extralight text-gray-600 dark:text-gray-100"> a delightful alternative </span>
         </span>
       </header>
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <h1 className="text-4xl font-bold text-center sm:text-left transition-all duration-700 ease-in-out text-gray-900 dark:text-gray-100">
-          {isProcessed ? 'Have fun' : 'Upload your JSON'}
-        </h1>
 
-        <AnimatePresence>
-          {!isUploaderHidden && (
+      <main
+        id="main-content"
+        role="main"
+        className="grid grid-rows-[0px_0fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]"
+      >
+        <div className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+          <h1 className="text-4xl font-bold text-center sm:text-left transition-all duration-700 ease-in-out text-gray-900 dark:text-gray-100">
+            {isResultsVisible ? '' : isProcessed ? 'Have fun' : 'Upload your JSON'}
+          </h1>
+
+          <AnimatePresence>
+            {!isUploaderHidden && (
+              <motion.div
+                key="uploader"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, y: -20, transition: { duration: 0.6 } }}
+              >
+                <UploadJSON
+                  setParsedQuestions={setParsedQuestions}
+                  isProcessed={isProcessed}
+                  setIsProcessed={setIsProcessed}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {parsedQuestions && isSettingsVisible && !isQuizStarted && (
             <motion.div
-              key="uploader"
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -20, transition: { duration: 0.6 } }}
+              key="settings"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
+              className="flex flex-col items-center gap-4"
             >
-              <UploadJSON
-                setParsedQuestions={setParsedQuestions}
-                isProcessed={isProcessed}
-                setIsProcessed={setIsProcessed}
+              <QuizSettings
+                questionCount={Object.keys(parsedQuestions).length}
+                onStartQuiz={(mode, simulationCount) => {
+                  setQuizMode(mode);
+                  setQuizStartTime(Date.now());
+
+                  if (mode === 'simulation' && simulationCount) {
+                    // Seleziona casualmente N domande
+                    const allQuestionKeys = Object.keys(parsedQuestions);
+                    const shuffled = [...allQuestionKeys].sort(() => Math.random() - 0.5);
+                    const selected = shuffled.slice(0, simulationCount);
+
+                    // Crea un nuovo oggetto con solo le domande selezionate
+                    const selectedQuestions: ParsedQuestions = {};
+                    selected.forEach((key, index) => {
+                      selectedQuestions[(index + 1).toString()] = parsedQuestions[key];
+                    });
+
+                    setActiveQuestions(selectedQuestions);
+                  } else {
+                    // Modalità 'all': usa tutte le domande
+                    setActiveQuestions(parsedQuestions);
+                  }
+
+                  setCurrentQuestionIndex(1);
+                  setAnswersState({});
+                  setIsQuizStarted(true);
+                }}
               />
             </motion.div>
           )}
-        </AnimatePresence>
 
-        {parsedQuestions && isSettingsVisible && !isQuizStarted && (
-          <motion.div
-            key="settings"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
-            className="flex flex-col items-center gap-4"
-          >
-            <QuizSettings
-              questionCount={Object.keys(parsedQuestions).length}
-              onStartQuiz={(mode, simulationCount) => {
-                setQuizMode(mode);
-                setQuizStartTime(Date.now());
-
-                if (mode === 'simulation' && simulationCount) {
-                  // Seleziona casualmente N domande
-                  const allQuestionKeys = Object.keys(parsedQuestions);
-                  const shuffled = [...allQuestionKeys].sort(() => Math.random() - 0.5);
-                  const selected = shuffled.slice(0, simulationCount);
-
-                  // Crea un nuovo oggetto con solo le domande selezionate
-                  const selectedQuestions: ParsedQuestions = {};
-                  selected.forEach((key, index) => {
-                    selectedQuestions[(index + 1).toString()] = parsedQuestions[key];
-                  });
-
-                  setActiveQuestions(selectedQuestions);
-                } else {
-                  // Modalità 'all': usa tutte le domande
-                  setActiveQuestions(parsedQuestions);
-                }
-
-                setCurrentQuestionIndex(1);
-                setAnswersState({});
-                setIsQuizStarted(true);
-              }}
-            />
-          </motion.div>
-        )}
-
-        {activeQuestions && isQuizStarted && !isResultsVisible && (
-          <motion.div
-            key="question-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
-            className="flex flex-col items-center gap-4"
-          >
-            <QuestionCard
-              questionNumber={currentQuestionIndex}
-              data={activeQuestions[currentQuestionIndex.toString()]}
-              selectedAnswers={answersState[currentQuestionIndex]?.selectedAnswers || []}
-              showSolution={answersState[currentQuestionIndex]?.showSolution || false}
-              isCorrect={answersState[currentQuestionIndex]?.isCorrect || null}
-              onAnswersChange={(answers) => handleAnswersChange(currentQuestionIndex, answers)}
-              onSolutionShown={(isCorrect) => handleSolutionShown(currentQuestionIndex, isCorrect)}
-            />
-            <div className="flex gap-4">
-              {quizMode === 'all' && (
+          {activeQuestions && isQuizStarted && !isResultsVisible && (
+            <motion.div
+              key="question-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
+              className="flex flex-col items-center gap-4"
+            >
+              <QuestionCard
+                questionNumber={currentQuestionIndex}
+                data={activeQuestions[currentQuestionIndex.toString()]}
+                selectedAnswers={answersState[currentQuestionIndex]?.selectedAnswers || []}
+                showSolution={answersState[currentQuestionIndex]?.showSolution || false}
+                isCorrect={answersState[currentQuestionIndex]?.isCorrect || null}
+                onAnswersChange={(answers) => handleAnswersChange(currentQuestionIndex, answers)}
+                onSolutionShown={(isCorrect) => handleSolutionShown(currentQuestionIndex, isCorrect)}
+              />
+              <div className="flex gap-4">
+                {quizMode === 'all' && (
+                  <button
+                    onClick={handlePrev}
+                    disabled={currentQuestionIndex === 1}
+                    className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+                    aria-label="Go to previous question"
+                  >
+                    Previous Question
+                  </button>
+                )}
+                {quizMode === 'all' && (
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="question-jump" className="sr-only">
+                      Jump to question number
+                    </label>
+                    <input
+                      id="question-jump"
+                      type="text"
+                      value={currentQuestionIndex || ''}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        if (newValue === '' || /^[0-9]*$/.test(newValue)) {
+                          const parsedValue = newValue === '' ? 0 : parseInt(newValue, 10);
+                          if (
+                            activeQuestions &&
+                            parsedValue >= 1 &&
+                            parsedValue <= Object.keys(activeQuestions).length
+                          ) {
+                            setCurrentQuestionIndex(parsedValue);
+                          }
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const newIndex = currentQuestionIndex;
+                          if (
+                            activeQuestions &&
+                            newIndex >= 1 &&
+                            newIndex <= Object.keys(activeQuestions).length
+                          ) {
+                            setCurrentQuestionIndex(newIndex);
+                          }
+                        }
+                      }}
+                      className="w-16 px-2 py-1 text-center border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      / {activeQuestions ? Object.keys(activeQuestions).length : 0}
+                    </span>
+                  </div>
+                )}
                 <button
-                  onClick={handlePrev}
-                  disabled={currentQuestionIndex === 1}
-                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-                  aria-label="Go to previous question"
-                >
-                  Previous Question
-                </button>
-              )}
-              {quizMode === 'all' && (
-                <div className="flex items-center gap-2">
-                  <label htmlFor="question-jump" className="sr-only">
-                    Jump to question number
-                  </label>
-                  <input
-                    id="question-jump"
-                    type="text"
-                    value={currentQuestionIndex || ''}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      if (newValue === '' || /^[0-9]*$/.test(newValue)) {
-                        const parsedValue = newValue === '' ? 0 : parseInt(newValue, 10);
-                        if (
-                          activeQuestions &&
-                          parsedValue >= 1 &&
-                          parsedValue <= Object.keys(activeQuestions).length
-                        ) {
-                          setCurrentQuestionIndex(parsedValue);
-                        }
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const newIndex = currentQuestionIndex;
-                        if (
-                          activeQuestions &&
-                          newIndex >= 1 &&
-                          newIndex <= Object.keys(activeQuestions).length
-                        ) {
-                          setCurrentQuestionIndex(newIndex);
-                        }
-                      }
-                    }}
-                    className="w-16 px-2 py-1 text-center border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
-                  />
-                  <span className="text-gray-700 dark:text-gray-300">
-                    / {activeQuestions ? Object.keys(activeQuestions).length : 0}
-                  </span>
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  const totalQuestions = activeQuestions ? Object.keys(activeQuestions).length : 0;
-                  if (currentQuestionIndex === totalQuestions && quizMode === 'simulation') {
-                    // Fine del quiz in modalità simulation
-                    setIsResultsVisible(true);
-                  } else {
-                    handleNext();
+                  onClick={() => {
+                    const totalQuestions = activeQuestions ? Object.keys(activeQuestions).length : 0;
+                    if (currentQuestionIndex === totalQuestions && quizMode === 'simulation') {
+                      // Fine del quiz in modalità simulation
+                      setIsResultsVisible(true);
+                    } else {
+                      handleNext();
+                    }
+                  }}
+                  disabled={
+                    quizMode === 'all' &&
+                    activeQuestions &&
+                    currentQuestionIndex === Object.keys(activeQuestions).length
                   }
-                }}
-                disabled={
-                  quizMode === 'all' &&
-                  activeQuestions &&
-                  currentQuestionIndex === Object.keys(activeQuestions).length
-                }
-                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 dark:bg-blue-400 dark:hover:bg-blue-500"
-                aria-label={
-                  quizMode === 'simulation' && activeQuestions && currentQuestionIndex === Object.keys(activeQuestions).length
-                    ? 'Finish quiz and view results'
-                    : 'Go to next question'
-                }
-              >
-                {quizMode === 'simulation' && activeQuestions && currentQuestionIndex === Object.keys(activeQuestions).length
-                  ? 'Finish Quiz'
-                  : 'Next Question'
-                }
-              </button>
-            </div>
-          </motion.div>
-        )}
+                  className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 dark:bg-blue-400 dark:hover:bg-blue-500"
+                  aria-label={
+                    quizMode === 'simulation' && activeQuestions && currentQuestionIndex === Object.keys(activeQuestions).length
+                      ? 'Finish quiz and view results'
+                      : 'Go to next question'
+                  }
+                >
+                  {quizMode === 'simulation' && activeQuestions && currentQuestionIndex === Object.keys(activeQuestions).length
+                    ? 'Finish Quiz'
+                    : 'Next Question'
+                  }
+                </button>
+              </div>
+            </motion.div>
+          )}
 
-        {isResultsVisible && activeQuestions && quizStatistics && (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
-          >
-            <QuizResults
-              stats={quizStatistics}
-              onRestart={() => {
-                setIsResultsVisible(false);
-                setIsSettingsVisible(true);
-                setIsQuizStarted(false);
-                setCurrentQuestionIndex(1);
-                setAnswersState({});
-                setActiveQuestions(null);
-              }}
-            />
-          </motion.div>
-        )}
+          {isResultsVisible && activeQuestions && quizStatistics && (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
+            >
+              <QuizResults
+                stats={quizStatistics}
+                onRestart={() => {
+                  setIsResultsVisible(false);
+                  setIsSettingsVisible(true);
+                  setIsQuizStarted(false);
+                  setCurrentQuestionIndex(1);
+                  setAnswersState({});
+                  setActiveQuestions(null);
+                }}
+              />
+            </motion.div>
+          )}
+        </div>
       </main>
 
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+      <footer role="contentinfo" className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500 dark:text-gray-400">
         <p>© {new Date().getFullYear()} Scrapy Topics. All rights reserved.</p>
         <a
           href="https://github.com/iskorini"
