@@ -102,6 +102,11 @@ export const QuizResults: React.FC<Props> = ({ stats, onRestart }) => {
                     </div>
                     <div className="text-sm text-gray-700 dark:text-gray-300">
                         Wrong Answers
+                        {stats.unanswered > 0 && (
+                            <span className="block text-xs mt-1 text-gray-600 dark:text-gray-400">
+                                (including {stats.unanswered} unanswered)
+                            </span>
+                        )}
                     </div>
                 </div>
 

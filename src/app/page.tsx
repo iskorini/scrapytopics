@@ -252,7 +252,11 @@ export default function Home() {
               stats={{
                 totalQuestions: Object.keys(activeQuestions).length,
                 correctAnswers: Object.values(answersState).filter(a => a.isCorrect === true).length,
-                wrongAnswers: Object.values(answersState).filter(a => a.isCorrect === false).length,
+                wrongAnswers: (() => {
+                  const answeredWrong = Object.values(answersState).filter(a => a.isCorrect === false).length;
+                  const unansweredCount = Object.keys(activeQuestions).length - Object.values(answersState).filter(a => a.showSolution).length;
+                  return answeredWrong + unansweredCount;
+                })(),
                 unanswered: Object.keys(activeQuestions).length - Object.values(answersState).filter(a => a.showSolution).length,
                 timeElapsed: startTime ? Math.floor((Date.now() - startTime) / 1000) : undefined
               }}
