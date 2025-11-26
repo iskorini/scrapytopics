@@ -28,6 +28,7 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
     };
 
     const maxSelectable = data.proposed_answer.length;
+    const canShowSolution = selectedAnswers.length === maxSelectable;
 
     const handleCheckboxChange = (key: string) => {
         if (showSolution) return;
@@ -82,11 +83,11 @@ export const QuestionCard: React.FC<Props> = ({ questionNumber, data }) => {
             </div>
             <div className="flex justify-center">
                 <button
-                    className={`px-4 py-2 rounded ${showSolution
-                        ? "bg-gray-200 text-gray-600 cursor-default dark:bg-gray-700 dark:text-gray-400"
-                        : "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    className={`px-4 py-2 rounded ${showSolution || !canShowSolution
+                            ? "bg-gray-200 text-gray-600 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
+                            : "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                         }`}
-                    disabled={showSolution}
+                    disabled={showSolution || !canShowSolution}
                     onClick={() => setShowSolution(true)}
                 >
                     show solution
